@@ -251,7 +251,13 @@ const AppContent = () => {
 
   // Dynamic Web3 connection and balance diagnostics logs
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected) {
+      if (data && data.state !== 'IDLE' && !['RESOLVED_RELEASED', 'RESOLVED_SLASHED'].includes(data.state)) {
+        updateCosignRequest(requestId, { state: 'IDLE' });
+      }
+      return;
+    }
+
     const time = new Date().toLocaleTimeString();
     
     setLogs(prev => [
@@ -261,6 +267,13 @@ const AppContent = () => {
         type: chainId === xLayerTestnet.id ? 'success' : 'error'
       }
     ]);
+
+    if (data && data.state === 'IDLE') {
+      updateCosignRequest(requestId, { 
+        state: 'WALLET_CONNECTED',
+        address: address || data.address
+      });
+    }
 
     if (balanceData) {
       setLogs(prev => [
@@ -281,7 +294,7 @@ const AppContent = () => {
         }
       ]);
     }
-  }, [isConnected, chainId, balanceData, balanceError]);
+  }, [isConnected, chainId, balanceData, balanceError, data?.state]);
 
   // Subscribe to real Firebase or local simulator data
   useEffect(() => {
