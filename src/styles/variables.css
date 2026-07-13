@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Typography */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* Theme Backgrounds */
+  --bg-deep: #040507;
+  --bg-grid: rgba(0, 255, 136, 0.015);
+  --bg-card: rgba(8, 10, 14, 0.95);
+  --bg-card-hover: rgba(14, 18, 26, 0.98);
+  --border-glass: rgba(255, 255, 255, 0.05);
+  --border-glass-hover: rgba(255, 255, 255, 0.12);
+
+  /* High Contrast Text */
+  --text-primary: #f3f4f6;
+  --text-secondary: #8e9cae;    /* High contrast slate secondary */
+  --text-muted: #526071;        /* Muted descriptions */
+  --text-active: #00ff88;
+
+  /* Status Colors (Vibrant Neon Palette) */
+  --color-dim: rgba(255, 255, 255, 0.15);
+  --color-active: #00ff88;      /* Laser green */
+  --color-verified: #00ff88;    /* Laser green */
+  --color-unrated: #00e1ff;     /* Sky Cyan */
+  --color-declined: #ffaa00;    /* Amber */
+  --color-failed: #4b5563;      /* Slate Grey */
+  --color-invalid: #ff3333;     /* Crimson Red */
+
+  /* Glowing Shadows */
+  --glow-active: 0 0 20px rgba(0, 255, 136, 0.35);
+  --glow-verified: 0 0 20px rgba(0, 255, 136, 0.35);
+  --glow-unrated: 0 0 20px rgba(0, 225, 255, 0.3);
+  --glow-declined: 0 0 20px rgba(255, 170, 0, 0.3);
+  --glow-failed: 0 0 15px rgba(75, 85, 99, 0.15);
+  --glow-invalid: 0 0 20px rgba(255, 51, 51, 0.3);
+
+  /* Easing & Timing */
+  --transition-fast: 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
