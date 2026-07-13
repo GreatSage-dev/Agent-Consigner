@@ -59,7 +59,7 @@ const xLayerTestnet = {
 } as const;
 
 // --- Live Contract Configuration ---
-const AGENT_COSIGNER_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000'; // Updated once user deploys
+const AGENT_COSIGNER_VAULT_ADDRESS: `0x${string}` = '0x6465fA0b07797175498f5647F558a8587b0834Db'; // Deployed on X Layer Testnet
 
 const AGENT_COSIGNER_VAULT_ABI = [
   {
