@@ -7,10 +7,11 @@ import {
   ConnectButton,
   useConnectModal
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, http, useAccount, useSignMessage, useConnect, useDisconnect, useBalance } from 'wagmi';
+import { WagmiProvider, http, useAccount, useSignMessage, useConnect, useDisconnect, useBalance, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { mainnet, arbitrum, xLayer } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { parseEther } from 'viem';
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -56,6 +57,36 @@ const xLayerTestnet = {
   },
   testnet: true,
 } as const;
+
+// --- Live Contract Configuration ---
+const AGENT_COSIGNER_VAULT_ADDRESS = '0x0000000000000000000000000000000000000000'; // Updated once user deploys
+
+const AGENT_COSIGNER_VAULT_ABI = [
+  {
+    "inputs": [{"internalType": "string", "name": "requestId", "type": "string"}],
+    "name": "stake",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "string", "name": "requestId", "type": "string"}],
+    "name": "release",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "string", "name": "requestId", "type": "string"},
+      {"internalType": "address payable", "name": "recipient", "type": "address"}
+    ],
+    "name": "slash",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const;
 
 const config = getDefaultConfig({
   appName: 'Agent Cosigner',
@@ -159,6 +190,8 @@ const AppContent = () => {
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
+  const { writeContractAsync, data: hash, error: writeError } = useWriteContract();
+  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ hash });
   const [timeTick, setTimeTick] = useState(Date.now());
   const [logs, setLogs] = useState<Array<{ text: string; type: 'system' | 'active' | 'success' | 'error' }>>([]);
   const logTerminalRef = useRef<HTMLDivElement | null>(null);
@@ -168,6 +201,53 @@ const AppContent = () => {
   useEffect(() => {
     if (data) stateRef.current = data.state;
   }, [data?.state]);
+
+  // Reactively track live staking transaction confirmation
+  useEffect(() => {
+    if (hash && isTxConfirmed) {
+      const time = new Date().toLocaleTimeString();
+      setLogs(prev => [
+        ...prev,
+        {
+          text: `[${time}] TX CONFIRMED: Collateral stake of 0.01 OKB successful on X Layer!`,
+          type: 'success'
+        }
+      ]);
+
+      const confirmFlow = async () => {
+        if (!data) return;
+        await updateCosignRequest(requestId, { 
+          state: 'STAKE_TX_CONFIRMED',
+          stake: { ...data.stake, status: 'confirmed', txHash: hash }
+        });
+
+        // 3. Cosigned after 1.5s
+        setTimeout(async () => {
+          await updateCosignRequest(requestId, { state: 'COSIGNED' });
+
+          // 4. Flow to resolution monitoring after 1.5s
+          setTimeout(async () => {
+            await updateCosignRequest(requestId, { 
+              state: 'RESOLUTION_PENDING',
+              resolution: { status: 'pending', resolvedAt: null, redirectedTo: null }
+            });
+
+            // 5. Autorelease after 4s (unless slashed by controller)
+            setTimeout(async () => {
+              if (stateRef.current === 'RESOLUTION_PENDING') {
+                await updateCosignRequest(requestId, { 
+                  state: 'RESOLVED_RELEASED',
+                  resolution: { status: 'released', resolvedAt: Date.now(), redirectedTo: null }
+                });
+              }
+            }, 5000);
+          }, 1500);
+        }, 1500);
+      };
+
+      confirmFlow();
+    }
+  }, [hash, isTxConfirmed]);
 
   // Dynamic Web3 connection and balance diagnostics logs
   useEffect(() => {
@@ -423,48 +503,87 @@ const AppContent = () => {
 
   const handleStakeCollateral = async () => {
     try {
-      await updateCosignRequest(requestId, { state: 'STAKE_SIGNATURE_REQUESTED' });
-      
-      const challenge = `Authorize Collateral Stake of ${data.stake.amount} USDC\nProtocol: Agent Cosigner L2`;
-      await signMessageAsync({ message: challenge });
-      
-      // 1. Transaction broadcasted
-      await updateCosignRequest(requestId, { 
-        state: 'STAKE_TX_PENDING',
-        stake: { ...data.stake, status: 'pending', txHash: '0x3a56cf89a58b29cd12c3de4588abefef89a0bc45' }
-      });
-
-      // 2. Mined / Confirmed after 2.5s
-      setTimeout(async () => {
+      if (AGENT_COSIGNER_VAULT_ADDRESS === '0x0000000000000000000000000000000000000000') {
+        // Fallback to simulation if no live contract is configured yet
+        await updateCosignRequest(requestId, { state: 'STAKE_SIGNATURE_REQUESTED' });
+        const challenge = `Authorize Collateral Stake of ${data.stake.amount} USDC\nProtocol: Agent Cosigner L2`;
+        await signMessageAsync({ message: challenge });
+        
         await updateCosignRequest(requestId, { 
-          state: 'STAKE_TX_CONFIRMED',
-          stake: { ...data.stake, status: 'confirmed', txHash: '0x3a56cf89a58b29cd12c3de4588abefef89a0bc45' }
+          state: 'STAKE_TX_PENDING',
+          stake: { ...data.stake, status: 'pending', txHash: '0x3a56cf89a58b29cd12c3de4588abefef89a0bc45' }
         });
 
-        // 3. Cosigned after 1.5s
         setTimeout(async () => {
-          await updateCosignRequest(requestId, { state: 'COSIGNED' });
+          await updateCosignRequest(requestId, { 
+            state: 'STAKE_TX_CONFIRMED',
+            stake: { ...data.stake, status: 'confirmed', txHash: '0x3a56cf89a58b29cd12c3de4588abefef89a0bc45' }
+          });
 
-          // 4. Flow to resolution monitoring after 1.5s
           setTimeout(async () => {
-            await updateCosignRequest(requestId, { 
-              state: 'RESOLUTION_PENDING',
-              resolution: { status: 'pending', resolvedAt: null, redirectedTo: null }
-            });
-
-            // 5. Autorelease after 4s (unless slashed by controller)
+            await updateCosignRequest(requestId, { state: 'COSIGNED' });
             setTimeout(async () => {
-              if (stateRef.current === 'RESOLUTION_PENDING') {
-                await updateCosignRequest(requestId, { 
-                  state: 'RESOLVED_RELEASED',
-                  resolution: { status: 'released', resolvedAt: Date.now(), redirectedTo: null }
-                });
-              }
-            }, 4000);
+              await updateCosignRequest(requestId, { 
+                state: 'RESOLUTION_PENDING',
+                resolution: { status: 'pending', resolvedAt: null, redirectedTo: null }
+              });
+
+              setTimeout(async () => {
+                if (stateRef.current === 'RESOLUTION_PENDING') {
+                  await updateCosignRequest(requestId, { 
+                    state: 'RESOLVED_RELEASED',
+                    resolution: { status: 'released', resolvedAt: Date.now(), redirectedTo: null }
+                  });
+                }
+              }, 4000);
+            }, 1500);
           }, 1500);
-        }, 1500);
-      }, 2500);
+        }, 2500);
+        return;
+      }
+
+      await updateCosignRequest(requestId, { state: 'STAKE_SIGNATURE_REQUESTED' });
+      
+      const time = new Date().toLocaleTimeString();
+      setLogs(prev => [
+        ...prev,
+        {
+          text: `[${time}] TX BROADCAST: Requesting collateral stake of 0.01 OKB in wallet...`,
+          type: 'active'
+        }
+      ]);
+
+      // Call the live smart contract stake function
+      const txHash = await writeContractAsync({
+        address: AGENT_COSIGNER_VAULT_ADDRESS,
+        abi: AGENT_COSIGNER_VAULT_ABI,
+        functionName: 'stake',
+        args: [requestId],
+        value: parseEther('0.01'), // Lock 0.01 OKB (conserving faucet gas)
+      });
+      
+      // Update DB to pending transaction with the real txHash!
+      await updateCosignRequest(requestId, { 
+        state: 'STAKE_TX_PENDING',
+        stake: { ...data.stake, status: 'pending', txHash: txHash }
+      });
+
+      setLogs(prev => [
+        ...prev,
+        {
+          text: `[${time}] TX PENDING: Staking transaction broadcasted. Hash: ${txHash.substring(0, 15)}...`,
+          type: 'active'
+        }
+      ]);
     } catch (err: any) {
+      const time = new Date().toLocaleTimeString();
+      setLogs(prev => [
+        ...prev,
+        {
+          text: `[${time}] TX FAILED: Collateral stake rejected or failed: ${err.message?.substring(0, 50)}`,
+          type: 'error'
+        }
+      ]);
       await updateCosignRequest(requestId, { state: 'STAKE_SIGNATURE_REJECTED' });
     }
   };
