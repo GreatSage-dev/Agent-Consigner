@@ -53,7 +53,7 @@ const xLayerTestnet = {
     },
   },
   blockExplorers: {
-    default: { name: 'XLayerTestScan', url: 'https://testnet.xlayerscan.com' },
+    default: { name: 'OKLink', url: 'https://www.oklink.com/xlayer-test' },
   },
   testnet: true,
 } as const;
@@ -922,7 +922,7 @@ const AppContent = () => {
                       <div className="detail-row mt-1 flex justify-between items-center text-[10px]">
                         <span className="detail-label">TX Hash:</span>
                         <a 
-                          href={`https://testnet.xlayerscan.com/tx/${data.stake.txHash}`} 
+                          href={`https://www.oklink.com/xlayer-test/tx/${data.stake.txHash}`} 
                           target="_blank" 
                           rel="noreferrer" 
                           className="font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
