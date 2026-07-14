@@ -365,7 +365,7 @@ const AppContent = () => {
         type = 'error';
         break;
       case 'STAKE_SIGNATURE_REQUESTED':
-        text = `[${time}] STAKE: Authorizing EIP-3009 USDC staking collateral...`;
+        text = `[${time}] STAKE: Authorizing OKB staking collateral...`;
         type = 'active';
         break;
       case 'STAKE_TX_PENDING':
@@ -527,7 +527,7 @@ const AppContent = () => {
       if (AGENT_COSIGNER_VAULT_ADDRESS === '0x0000000000000000000000000000000000000000') {
         // Fallback to simulation if no live contract is configured yet
         await updateCosignRequest(requestId, { state: 'STAKE_SIGNATURE_REQUESTED' });
-        const challenge = `Authorize Collateral Stake of ${data.stake.amount} USDC\nProtocol: Agent Cosigner L2`;
+        const challenge = `Authorize Collateral Stake of ${data.stake.amount} OKB\nProtocol: Agent Cosigner L2`;
         await signMessageAsync({ message: challenge });
         
         await updateCosignRequest(requestId, { 
@@ -580,7 +580,7 @@ const AppContent = () => {
         abi: AGENT_COSIGNER_VAULT_ABI,
         functionName: 'stake',
         args: [requestId],
-        value: parseEther('0.01'), // Lock 0.01 OKB (conserving faucet gas)
+        value: parseEther(data.stake.amount.toString()), // Lock specified OKB amount
       });
       
       // Update DB to pending transaction with the real txHash!
@@ -898,10 +898,10 @@ const AppContent = () => {
                   'RESOLVED_SLASHED'
                 ].includes(data.state) && (
                   <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.06)] flex flex-col gap-2">
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">USDC Collateral</div>
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">OKB Collateral</div>
                     <div className="detail-row">
                       <span className="detail-label">Staked Size</span>
-                      <span className="detail-value text-[#00ff88] font-mono">{data.stake.amount} USDC</span>
+                      <span className="detail-value text-[#00ff88] font-mono">{data.stake.amount} OKB</span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">Protocol Fee</span>

@@ -57,7 +57,7 @@ class SimulatorDatabase {
       },
       stake: {
         status: 'requested',
-        amount: isNew ? 500 : 5000, // Higher stake for established, conservative for new
+        amount: 0.01, // 0.01 OKB collateral
         feePercent: isNew ? 2.5 : 1.0, // New agent has higher fee due to risk
         txHash: null,
         error: null,
