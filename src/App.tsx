@@ -171,9 +171,15 @@ const ParticleCanvas = () => {
 const AppContent = () => {
   const [showLanding, setShowLanding] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [requestId, setRequestId] = useState<string>('demo-established');
+  const [requestId, setRequestId] = useState<string>(() => 'demo-established-' + Math.floor(1000 + Math.random() * 9000));
   const [data, setData] = useState<CosignRequest | null>(null);
   const [activeTab, setActiveTab] = useState<'core' | 'ledger'>('core');
+
+  const handleRequestIdChange = (id: string) => {
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    setRequestId(`${id}-${suffix}`);
+    setActiveTab('core');
+  };
 
   const handleEnterConsole = () => {
     setIsTransitioning(true);
@@ -194,8 +200,11 @@ const AppContent = () => {
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
   const { openConnectModal } = useConnectModal();
-  const { writeContractAsync, data: hash, error: writeError } = useWriteContract();
-  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ hash });
+  const [activeTxHash, setActiveTxHash] = useState<string | null>(null);
+  const { writeContractAsync, error: writeError } = useWriteContract();
+  const { data: txReceipt, isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ 
+    hash: activeTxHash as `0x${string}` | undefined 
+  });
   const [timeTick, setTimeTick] = useState(Date.now());
   const [logs, setLogs] = useState<Array<{ text: string; type: 'system' | 'active' | 'success' | 'error' }>>([]);
   const logTerminalRef = useRef<HTMLDivElement | null>(null);
@@ -208,8 +217,29 @@ const AppContent = () => {
 
   // Reactively track live staking transaction confirmation
   useEffect(() => {
-    if (hash && isTxConfirmed) {
+    if (activeTxHash && isTxConfirmed && txReceipt) {
       const time = new Date().toLocaleTimeString();
+
+      if (txReceipt.status === 'reverted') {
+        setLogs(prev => [
+          ...prev,
+          {
+            text: `[${time}] CONTRACT ERROR: Staking transaction reverted on-chain!`,
+            type: 'error'
+          }
+        ]);
+        const failFlow = async () => {
+          if (!data) return;
+          await updateCosignRequest(requestId, { 
+            state: 'STAKE_TX_FAILED',
+            stake: { ...data.stake, status: 'failed', error: 'Transaction reverted on-chain' }
+          });
+        };
+        failFlow();
+        setActiveTxHash(null);
+        return;
+      }
+
       setLogs(prev => [
         ...prev,
         {
@@ -222,7 +252,7 @@ const AppContent = () => {
         if (!data) return;
         await updateCosignRequest(requestId, { 
           state: 'STAKE_TX_CONFIRMED',
-          stake: { ...data.stake, status: 'confirmed', txHash: hash }
+          stake: { ...data.stake, status: 'confirmed', txHash: activeTxHash }
         });
 
         // 3. Cosigned after 1.5s
@@ -236,7 +266,7 @@ const AppContent = () => {
               resolution: { status: 'pending', resolvedAt: null, redirectedTo: null }
             });
 
-            // 5. Autorelease after 4s (unless slashed by controller)
+            // 5. Autorelease after 5s (unless slashed by controller)
             setTimeout(async () => {
               if (stateRef.current === 'RESOLUTION_PENDING') {
                 await updateCosignRequest(requestId, { 
@@ -250,8 +280,9 @@ const AppContent = () => {
       };
 
       confirmFlow();
+      setActiveTxHash(null);
     }
-  }, [hash, isTxConfirmed]);
+  }, [activeTxHash, isTxConfirmed, txReceipt]);
 
   // Dynamic Web3 connection and balance diagnostics logs
   useEffect(() => {
@@ -431,7 +462,7 @@ const AppContent = () => {
 
     // 2. Load ledger records after 1.5s
     setTimeout(async () => {
-      const isNew = requestId === 'demo-new';
+      const isNew = requestId.startsWith('demo-new');
       await updateCosignRequest(requestId, { 
         state: isNew ? 'LEDGER_EMPTY' : 'LEDGER_LOADED',
         ledger: { ...data.ledger, status: isNew ? 'empty' : 'loaded' }
@@ -592,6 +623,9 @@ const AppContent = () => {
         stake: { ...data.stake, status: 'pending', txHash: txHash }
       });
 
+      // Track active transaction
+      setActiveTxHash(txHash);
+
       setLogs(prev => [
         ...prev,
         {
@@ -614,7 +648,12 @@ const AppContent = () => {
 
   const handleResetWorkspace = () => {
     setLogs([]);
-    simulator.resetDemo(requestId);
+    setActiveTxHash(null);
+    const prefix = requestId.startsWith('demo-new') ? 'demo-new' : 'demo-established';
+    const newId = `${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+    setRequestId(newId);
+    setActiveTab('core');
+    simulator.resetDemo(newId);
   };
 
   const handleForceState = (forcedState: CosignState) => {
@@ -1126,7 +1165,7 @@ const AppContent = () => {
       {/* Floating control deck for demos */}
       <ControlPanel 
         currentRequestId={requestId}
-        onRequestIdChange={setRequestId}
+        onRequestIdChange={handleRequestIdChange}
         currentState={data.state}
         onForceState={handleForceState}
       />
