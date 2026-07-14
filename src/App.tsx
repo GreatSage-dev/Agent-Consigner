@@ -186,6 +186,9 @@ const AppContent = () => {
   const { data: balanceData, error: balanceError } = useBalance({
     address: address,
     chainId: xLayerTestnet.id,
+    query: {
+      refetchInterval: 5000,
+    }
   });
   const { signMessageAsync } = useSignMessage();
   const { connect } = useConnect();
@@ -631,6 +634,25 @@ const AppContent = () => {
       );
     }
 
+    const isAnchorPhase = [
+      'IDLE',
+      'WALLET_CONNECTING',
+      'WALLET_CONNECTED',
+      'SIGNATURE_REQUESTED',
+      'SIGNATURE_REJECTED',
+      'SIGNATURE_INVALID'
+    ].includes(data.state);
+
+    const isHighRisk = !isAnchorPhase && ((data.risk.score > 0 && data.risk.score < 70) || data.risk.status === 'declined' || data.state === 'HASH_CHAIN_BROKEN');
+
+    if (isHighRisk || data.state === 'RISK_HIGH_DECLINE') {
+      return (
+        <button disabled className="action-button bg-amber-600/30 border border-amber-500/20 text-amber-500 cursor-not-allowed shadow-none">
+          Risk Too High - Declined
+        </button>
+      );
+    }
+
     const state = data.state;
 
     if (state === 'WALLET_CONNECTED') {
@@ -700,13 +722,6 @@ const AppContent = () => {
       );
     }
 
-    if (state === 'RISK_HIGH_DECLINE') {
-      return (
-        <button disabled className="action-button bg-amber-600/30 border border-amber-500/20 text-amber-500 cursor-not-allowed shadow-none">
-          Risk Too High - Declined
-        </button>
-      );
-    }
 
     if (state === 'STAKE_SIGNATURE_REQUESTED') {
       return (
@@ -772,7 +787,18 @@ const AppContent = () => {
 
   // Helper to determine Concentric Shield path styling
   const getRingClass = (ringIndex: number) => {
-    if (data.resolution.status === 'slashed') return 'shield-ring-path slashed';
+    const isAnchorPhase = [
+      'IDLE',
+      'WALLET_CONNECTING',
+      'WALLET_CONNECTED',
+      'SIGNATURE_REQUESTED',
+      'SIGNATURE_REJECTED',
+      'SIGNATURE_INVALID'
+    ].includes(data.state);
+
+    const isHighRisk = !isAnchorPhase && ((data.risk.score > 0 && data.risk.score < 70) || data.risk.status === 'declined' || data.state === 'HASH_CHAIN_BROKEN');
+
+    if (data.resolution.status === 'slashed' || isHighRisk) return 'shield-ring-path slashed';
     if (['RISK_COMPUTING', 'HASH_VERIFICATION_RUNNING', 'STAKE_TX_PENDING'].includes(data.state)) {
       return 'shield-ring-path active';
     }
@@ -945,10 +971,24 @@ const AppContent = () => {
                     <span className="detail-label">Shield Resolution</span>
                     <span className={`led-indicator ${
                       data.resolution.status === 'released' ? 'verified' : 
-                      data.resolution.status === 'slashed' ? 'error' : 'idle'
+                      (data.resolution.status === 'slashed' || (![
+                        'IDLE',
+                        'WALLET_CONNECTING',
+                        'WALLET_CONNECTED',
+                        'SIGNATURE_REQUESTED',
+                        'SIGNATURE_REJECTED',
+                        'SIGNATURE_INVALID'
+                      ].includes(data.state) && ((data.risk.score > 0 && data.risk.score < 70) || data.risk.status === 'declined' || data.state === 'HASH_CHAIN_BROKEN'))) ? 'error' : 'idle'
                     }`}>
                       <span className="led-dot" />
-                      {data.resolution.status}
+                      {(![
+                        'IDLE',
+                        'WALLET_CONNECTING',
+                        'WALLET_CONNECTED',
+                        'SIGNATURE_REQUESTED',
+                        'SIGNATURE_REJECTED',
+                        'SIGNATURE_INVALID'
+                      ].includes(data.state) && ((data.risk.score > 0 && data.risk.score < 70) || data.risk.status === 'declined' || data.state === 'HASH_CHAIN_BROKEN')) ? 'DECLINED' : data.resolution.status}
                     </span>
                   </div>
                   {data.resolution.resolvedAt && (
