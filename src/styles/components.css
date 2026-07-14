@@ -21,8 +21,8 @@
   grid-template-columns: 1fr;
   gap: 1.25rem;
   flex: 1;
-  height: calc(100vh - 100px);
-  min-height: 0;
+  min-height: calc(100vh - 180px);
+  height: auto;
 }
 
 @media (min-width: 1024px) {
