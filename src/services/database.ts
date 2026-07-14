@@ -35,19 +35,37 @@ export function subscribeToCosignRequest(
 ): () => void {
   if (db) {
     const requestRef = ref(db, `cosignRequests/${requestId}`);
-    return onValue(requestRef, (snapshot) => {
-      if (snapshot.exists()) {
-        callback(snapshot.val() as CosignRequest);
-      } else {
-        // If it doesn't exist in Firebase yet, seed it from the simulator's initial state
-        const unsubscribeSim = simulator.subscribe(requestId, (data) => {
-          set(requestRef, data);
-          callback(data);
-          // Unsubscribe from simulator once we seed Firebase
-          unsubscribeSim();
-        });
+    let isSimFallbackActive = false;
+    let unsubSim: (() => void) | null = null;
+
+    const unsubFirebase = onValue(
+      requestRef,
+      (snapshot) => {
+        if (isSimFallbackActive) return;
+        if (snapshot.exists()) {
+          callback(snapshot.val() as CosignRequest);
+        } else {
+          // If it doesn't exist in Firebase yet, seed it from the simulator's initial state
+          const unsubscribeSim = simulator.subscribe(requestId, (data) => {
+            set(requestRef, data).catch((err) => {
+              console.warn('Firebase set failed, using local simulation state:', err);
+            });
+            callback(data);
+            unsubscribeSim();
+          });
+        }
+      },
+      (error) => {
+        console.warn('Firebase subscribe failed, falling back to local simulator:', error);
+        isSimFallbackActive = true;
+        unsubSim = simulator.subscribe(requestId, callback);
       }
-    });
+    );
+
+    return () => {
+      unsubFirebase();
+      if (unsubSim) unsubSim();
+    };
   } else {
     return simulator.subscribe(requestId, callback);
   }
@@ -57,11 +75,12 @@ export function updateCosignRequest(
   requestId: string,
   updates: Partial<CosignRequest>
 ): Promise<void> {
+  // Always keep the local simulator state in sync
+  simulator.update(requestId, updates);
+
   if (db) {
     const requestRef = ref(db, `cosignRequests/${requestId}`);
-    // In real Firebase, we do a set of the combined state (or update specific fields if needed)
-    return new Promise((resolve, reject) => {
-      // First get current val to merge
+    return new Promise((resolve) => {
       onValue(
         requestRef,
         (snapshot) => {
@@ -73,13 +92,19 @@ export function updateCosignRequest(
           };
           set(requestRef, merged)
             .then(() => resolve())
-            .catch(reject);
+            .catch((err) => {
+              console.warn('Firebase set update failed:', err);
+              resolve(); // Resolve anyway to let frontend run locally
+            });
+        },
+        (error) => {
+          console.warn('Firebase update onValue failed:', error);
+          resolve(); // Resolve anyway to let frontend run locally
         },
         { onlyOnce: true }
       );
     });
   } else {
-    simulator.update(requestId, updates);
     return Promise.resolve();
   }
 }
