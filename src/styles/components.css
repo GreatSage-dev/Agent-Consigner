@@ -357,6 +357,71 @@
 }
 
 /* --- Right Column (Conscience Ledger Blocks + Logs) --- */
+/* --- Dashboard Tab Selection Header --- */
+.dashboard-tabs {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 0.35rem;
+  z-index: 5;
+}
+
+.tab-button {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.tab-button:hover:not(.locked) {
+  color: #ffffff;
+}
+
+.tab-button.active {
+  color: var(--color-active);
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.35);
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -0.45rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--color-active);
+  box-shadow: 0 0 8px var(--color-active);
+}
+
+.tab-button.locked {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* --- Scroll-Reveal Slide Transition --- */
+.scroll-reveal-container {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: scroll-reveal-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes scroll-reveal-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Cryptographic Chronological Timeline --- */
 .ledger-container {
   flex: 1.1;
   min-height: 0;
@@ -364,75 +429,168 @@
   flex-direction: column;
 }
 
-.ledger-block-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 0.4rem;
-  margin-top: 0.5rem;
-}
-
-.ledger-block {
-  aspect-ratio: 1;
-  background: rgba(255, 255, 255, 0.01);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  border-radius: 3px;
-  cursor: pointer;
+.timeline-container {
   position: relative;
+  padding-left: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-family: monospace;
-  font-size: 0.55rem;
-  color: var(--text-muted);
-  transition: all var(--transition-fast);
+  gap: 1rem;
 }
 
-.ledger-block:hover {
-  transform: scale(1.12);
+.timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--color-active), rgba(0, 255, 136, 0.1) 80%, transparent 100%);
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.15);
+  z-index: 1;
+}
+
+.timeline-line-pulse {
+  position: absolute;
+  top: 0;
+  left: 7px;
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, #ffffff, transparent);
+  animation: flow-pulse 4s linear infinite;
+  z-index: 2;
+}
+
+@keyframes flow-pulse {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.timeline-node-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.002);
+}
+
+.timeline-node-item:hover {
+  background: rgba(255, 255, 255, 0.015);
+  border-color: rgba(255, 255, 255, 0.04);
+  transform: translateX(4px);
+}
+
+.timeline-node-item.selected {
+  background: rgba(0, 255, 136, 0.03);
+  border-color: rgba(0, 255, 136, 0.1);
+}
+
+.timeline-node-dot {
+  position: absolute;
+  left: -2rem;
+  top: 1.1rem;
+  transform: translateX(3px);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg-deep);
+  border: 2px solid var(--text-muted);
   z-index: 5;
-  border-color: var(--color-active);
-  box-shadow: var(--glow-active);
+  transition: all var(--transition-normal);
+}
+
+.timeline-node-item.status-verified .timeline-node-dot {
+  border-color: var(--color-verified);
+  box-shadow: 0 0 6px var(--color-verified);
+  background: var(--color-verified);
+}
+
+.timeline-node-item.status-fetching .timeline-node-dot {
+  border-color: var(--color-unrated);
+  box-shadow: 0 0 6px var(--color-unrated);
+  animation: block-pulse 1s infinite alternate;
+}
+
+.timeline-node-item.status-broken .timeline-node-dot {
+  border-color: var(--color-invalid);
+  box-shadow: 0 0 10px var(--color-invalid);
+  background: var(--color-invalid);
+  animation: blink-led 0.5s infinite alternate;
+}
+
+.timeline-node-item.status-dimmed .timeline-node-dot {
+  border-color: var(--text-muted);
+  opacity: 0.3;
+}
+
+.timeline-node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.timeline-node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-node-title {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
   color: #ffffff;
 }
 
-.ledger-block.status-empty { 
-  background: rgba(255, 255, 255, 0.005); 
-  border-color: rgba(255, 255, 255, 0.01); 
+.timeline-node-time {
+  font-family: monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
 }
 
-.ledger-block.status-fetching { 
-  background: rgba(0, 255, 136, 0.06); 
-  border-color: rgba(0, 255, 136, 0.25); 
-  animation: block-pulse 1s infinite alternate; 
+.timeline-node-hashes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 0.2rem;
 }
 
-.ledger-block.status-verified { 
-  background: rgba(0, 255, 136, 0.12); 
-  border-color: rgba(0, 255, 136, 0.3); 
-  color: var(--color-active);
+.timeline-hash-block {
+  display: flex;
+  flex-direction: column;
 }
 
-.ledger-block.status-broken { 
-  background: rgba(255, 51, 51, 0.18); 
-  border-color: rgba(255, 51, 51, 0.45); 
-  box-shadow: var(--glow-invalid); 
+.timeline-hash-label {
+  font-size: 0.55rem;
+  font-family: monospace;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timeline-hash-value {
+  font-size: 0.65rem;
+  font-family: monospace;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.timeline-node-item.selected .timeline-hash-value {
+  color: #ffffff;
+}
+
+.timeline-node-item.status-broken .timeline-hash-value.current-hash {
   color: var(--color-invalid);
-  animation: block-alert 0.3s infinite alternate; 
-}
-
-.ledger-block.status-dimmed { 
-  opacity: 0.25; 
-}
-
-.ledger-block-link {
-  position: absolute;
-  width: 6px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  right: -6px;
-  top: 50%;
-  pointer-events: none;
+  font-weight: 600;
 }
 
 .log-stream-container {

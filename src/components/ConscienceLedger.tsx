@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Database, 
-  CheckCircle, 
   AlertTriangle, 
-  HelpCircle, 
-  Clock, 
-  Search
+  HelpCircle,
+  TrendingUp
 } from 'lucide-react';
 import { LedgerState, HashVerificationState, CosignState } from '../types';
 import { formatDuration } from '../utils/time';
@@ -79,114 +77,110 @@ export const ConscienceLedger: React.FC<ConscienceLedgerProps> = ({
 
   return (
     <div className="ledger-container">
-      {/* Scanner laser overlay when running */}
-      {hashVerification.status === 'running' && (
-        <div className="ledger-scanner-wave" />
-      )}
-
-      <div className="ledger-header">
+      <div className="ledger-header" style={{ marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
         <div className="flex items-center gap-2">
           <Database className={`w-4 h-4 ${hashVerification.status === 'verified' ? 'text-emerald-400' : 'text-slate-400'}`} />
-          <span className="ledger-title">Conscience Ledger</span>
+          <span className="ledger-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.8rem', color: '#ffffff', letterSpacing: '0.05em' }}>Conscience Ledger</span>
         </div>
-        <span className="ledger-summary-label">{getLedgerSubTitle()}</span>
+        <span className="ledger-summary-label" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{getLedgerSubTitle()}</span>
       </div>
 
       {/* States: FETCHING, FAILED, EMPTY, LOADED */}
       {ledger.status === 'fetching' && (
-        <div className="py-8 text-center flex flex-col items-center justify-center gap-2">
+        <div className="py-12 text-center flex flex-col items-center justify-center gap-2">
           <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-slate-400 font-medium">Reaching ledger nodes...</p>
+          <p className="text-xs text-slate-400 font-mono mt-2">Syncing ledger records from L2 nodes...</p>
         </div>
       )}
 
       {ledger.status === 'failed' && (
-        <div className="py-6 text-center flex flex-col items-center justify-center gap-3">
-          <AlertTriangle className="w-10 h-10 text-red-400 animate-bounce" style={{ color: 'var(--color-failed)' }} />
+        <div className="py-8 text-center flex flex-col items-center justify-center gap-3">
+          <AlertTriangle className="w-10 h-10 text-red-400 animate-pulse" style={{ color: 'var(--color-failed)' }} />
           <div>
-            <p className="text-sm font-semibold text-white">Database Outage</p>
-            <p className="text-xs text-slate-400 mt-1">Firebase database did not respond in time</p>
+            <p className="text-sm font-semibold text-white">Database Connection Failure</p>
+            <p className="text-xs text-slate-400 mt-1">Failed to establish stable web socket sync</p>
           </div>
           {onRetryFetch && (
             <button 
               onClick={onRetryFetch}
-              className="protocol-node-retry"
-              style={{ marginTop: '0.25rem' }}
+              className="control-btn"
+              style={{ marginTop: '0.5rem', width: 'auto', padding: '0.4rem 1rem' }}
             >
-              Retry Connection
+              Retry Handshake
             </button>
           )}
         </div>
       )}
 
       {ledger.status === 'empty' && (
-        <div className="py-8 text-center flex flex-col items-center justify-center gap-3">
-          <HelpCircle className="w-10 h-10 text-teal-400 opacity-60" style={{ color: 'var(--color-unrated)' }} />
+        <div className="py-12 text-center flex flex-col items-center justify-center gap-3">
+          <HelpCircle className="w-10 h-10 text-cyan-400 opacity-60" style={{ color: 'var(--color-unrated)' }} />
           <div>
-            <p className="text-sm font-semibold text-white">Unrated History</p>
-            <p className="text-xs text-slate-400 mt-1">First-time agent registration. No records in ledger.</p>
+            <p className="text-sm font-semibold text-white">Genesis Environment</p>
+            <p className="text-xs text-slate-400 mt-1">First-time registration. No records in ledger.</p>
           </div>
         </div>
       )}
 
       {ledger.status === 'loaded' && ledger.records.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {/* Glowing Block Chain Grid */}
-          <div className="ledger-grid">
-            {ledger.records.map((record, index) => {
-              const status = getBlockStatus(index);
-              return (
+        <div className="timeline-container">
+          {/* Laser central vertical line */}
+          <div className="timeline-line" />
+          <div className="timeline-line-pulse" />
+
+          {/* Timeline Nodes */}
+          {ledger.records.map((record, index) => {
+            const status = getBlockStatus(index);
+            const isSelected = selectedBlock === index;
+
+            return (
+              <div key={record.decisionId} className="flex flex-col">
                 <div
-                  key={record.decisionId}
                   onClick={() => setSelectedBlock(index)}
-                  className={`ledger-block status-${status} ${selectedBlock === index ? 'ring-1 ring-cyan-400 scale-[1.05]' : ''}`}
+                  className={`timeline-node-item status-${status} ${isSelected ? 'selected' : ''}`}
                 >
-                  <span>#{index + 1}</span>
-                  <span className="text-[9px] opacity-40">DEC</span>
-                  {index < ledger.records.length - 1 && (
-                    <div className="ledger-block-link" />
-                  )}
+                  {/* Glowing Node Marker */}
+                  <div className="timeline-node-dot" />
+
+                  {/* Node Content */}
+                  <div className="timeline-node-content">
+                    <div className="timeline-node-header">
+                      <span className="timeline-node-title flex items-center gap-1.5">
+                        <span className="text-[10px] text-slate-500 font-mono">#{String(index + 1).padStart(2, '0')}</span>
+                        {record.decisionId}
+                      </span>
+                      <span className="timeline-node-time">
+                        {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                    </div>
+
+                    {/* Hashes Row */}
+                    <div className="timeline-node-hashes">
+                      <div className="timeline-hash-block">
+                        <span className="timeline-hash-label">Prev Hash</span>
+                        <span className="timeline-hash-value" title={record.prevHash}>
+                          {record.prevHash.substring(0, 14)}...
+                        </span>
+                      </div>
+                      <div className="timeline-hash-block">
+                        <span className="timeline-hash-label">Block Hash</span>
+                        <span className={`timeline-hash-value current-hash`} title={record.hash}>
+                          {record.hash.substring(0, 14)}...
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Block Inspector Sub-panel */}
-          {selectedBlock !== null && ledger.records[selectedBlock] && (
-            <div className="bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.03)] p-3 rounded-12 text-xs flex flex-col gap-2">
-              <div className="flex justify-between items-center border-b border-[rgba(255,255,255,0.05)] pb-1.5 mb-1">
-                <span className="font-semibold text-white flex items-center gap-1">
-                  <Search className="w-3.5 h-3.5 text-cyan-400" />
-                  Block #{selectedBlock + 1} Metadata
-                </span>
-                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {new Date(ledger.records[selectedBlock].timestamp).toLocaleTimeString()}
-                </span>
+                {/* Inline Tamper Warning */}
+                {isSelected && status === 'broken' && (
+                  <div className="ml-3 mt-1 mr-1 p-2.5 bg-red-950/20 border border-red-500/20 text-red-300 rounded text-[10px] leading-relaxed">
+                    <strong>Integrity Mismatch:</strong> The cryptographic link from block #{index + 1} to block #{index} has been broken. Local audit failed.
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-3 gap-y-1 text-slate-400">
-                <span>Decision ID:</span>
-                <span className="col-span-2 text-white font-mono">{ledger.records[selectedBlock].decisionId}</span>
-
-                <span>Prev Hash:</span>
-                <span className="col-span-2 text-white font-mono text-[10px] text-ellipsis overflow-hidden">
-                  {ledger.records[selectedBlock].prevHash}
-                </span>
-
-                <span>Block Hash:</span>
-                <span className={`col-span-2 font-mono text-[10px] text-ellipsis overflow-hidden ${
-                  getBlockStatus(selectedBlock) === 'broken' ? 'text-red-400 font-semibold' : 'text-emerald-400'
-                }`}>
-                  {ledger.records[selectedBlock].hash}
-                </span>
-              </div>
-              {getBlockStatus(selectedBlock) === 'broken' && (
-                <div className="mt-1 p-2 bg-red-950/30 border border-red-500/20 text-red-300 rounded text-[10px] leading-relaxed">
-                  <strong>Link Mismatch:</strong> The cryptographic hash link from block #{selectedBlock + 1} to block #{selectedBlock} is invalid. The chain ledger has been tampered with.
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })}
         </div>
       )}
     </div>

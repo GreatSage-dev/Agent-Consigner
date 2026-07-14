@@ -173,6 +173,7 @@ const AppContent = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [requestId, setRequestId] = useState<string>('demo-established');
   const [data, setData] = useState<CosignRequest | null>(null);
+  const [activeTab, setActiveTab] = useState<'core' | 'ledger'>('core');
 
   const handleEnterConsole = () => {
     setIsTransitioning(true);
@@ -417,27 +418,7 @@ const AppContent = () => {
   }
 
   // Action flow handlers
-  const handleAnchorIdentity = async () => {
-    try {
-      if (!address) return;
-      await updateCosignRequest(requestId, { state: 'SIGNATURE_REQUESTED' });
-      
-      const challenge = `Anchor Agent Identity for Request ID: ${requestId}\nTimestamp: ${Date.now()}`;
-      await signMessageAsync({ message: challenge });
-      
-      await updateCosignRequest(requestId, { 
-        state: 'SIGNATURE_VERIFIED',
-        address: address
-      });
-    } catch (err: any) {
-      if (err.name === 'UserRejectedRequestError') {
-        await updateCosignRequest(requestId, { state: 'SIGNATURE_REJECTED' });
-      } else {
-        await updateCosignRequest(requestId, { state: 'SIGNATURE_INVALID' });
-      }
-    }
-  };
-
+  // Action flow handlers
   const handleSyncLedger = async () => {
     // 1. Start fetching
     await updateCosignRequest(requestId, { 
@@ -512,6 +493,33 @@ const AppContent = () => {
         }, 300);
       }, 1500);
     }, 1500);
+  };
+
+  const handleAnchorIdentity = async () => {
+    try {
+      if (!address) return;
+      await updateCosignRequest(requestId, { state: 'SIGNATURE_REQUESTED' });
+      
+      const challenge = `Anchor Agent Identity for Request ID: ${requestId}\nTimestamp: ${Date.now()}`;
+      await signMessageAsync({ message: challenge });
+      
+      await updateCosignRequest(requestId, { 
+        state: 'SIGNATURE_VERIFIED',
+        address: address
+      });
+
+      // Automatically switch to ledger tab and trigger sync
+      setActiveTab('ledger');
+      setTimeout(() => {
+        handleSyncLedger();
+      }, 500);
+    } catch (err: any) {
+      if (err.name === 'UserRejectedRequestError') {
+        await updateCosignRequest(requestId, { state: 'SIGNATURE_REJECTED' });
+      } else {
+        await updateCosignRequest(requestId, { state: 'SIGNATURE_INVALID' });
+      }
+    }
   };
 
   const handleStakeCollateral = async () => {
@@ -814,230 +822,264 @@ const AppContent = () => {
         </div>
       </header>
 
-      {/* 3-Column Terminal Grid Layout */}
+      {/* Tab Selectors Navigation */}
+      {isConnected && (
+        <div className="dashboard-tabs">
+          <button 
+            onClick={() => setActiveTab('core')} 
+            className={`tab-button ${activeTab === 'core' ? 'active' : ''}`}
+          >
+            Core Dashboard
+          </button>
+          
+          {![
+            'IDLE', 
+            'WALLET_CONNECTING', 
+            'WALLET_CONNECTED', 
+            'SIGNATURE_REQUESTED', 
+            'SIGNATURE_REJECTED', 
+            'SIGNATURE_INVALID'
+          ].includes(data.state) && (
+            <button 
+              onClick={() => setActiveTab('ledger')} 
+              className={`tab-button ${activeTab === 'ledger' ? 'active' : ''}`}
+            >
+              Conscience Ledger
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Grid Layout Container */}
       <div className="terminal-layout">
         
-        {/* Left Column: registry-section + outcome-section */}
-        <div className="flex flex-col gap-4 console-slide-left">
-          {/* Card 1: Consigner Registry */}
-          <div className="terminal-card registry-section">
-            <h4 className="terminal-card-header">Registry Profile</h4>
-            
-            <div className="flex flex-col gap-3">
-              <div className="detail-row">
-                <span className="detail-label">Identity Anchor</span>
-                <span className={`detail-value font-mono text-xs ${data.state !== 'IDLE' ? 'text-white' : 'text-slate-500'}`}>
-                  {data.state === 'IDLE' ? 'Unanchored' : `${data.address.substring(0, 8)}...${data.address.substring(data.address.length - 8)}`}
-                </span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Verification Lock</span>
-                <span className={`led-indicator ${
-                  ['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED', 'SIGNATURE_REQUESTED', 'SIGNATURE_REJECTED', 'SIGNATURE_INVALID'].includes(data.state)
-                    ? 'idle' 
-                    : 'verified'
-                }`}>
-                  <span className="led-dot" />
-                  {['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED', 'SIGNATURE_REQUESTED', 'SIGNATURE_REJECTED', 'SIGNATURE_INVALID'].includes(data.state)
-                    ? 'PENDING' 
-                    : 'LOCKED'}
-                </span>
-              </div>
-            </div>
+        {activeTab === 'core' ? (
+          <>
+            {/* Left Column: registry-section + outcome-section */}
+            <div className="flex flex-col gap-4 console-slide-left">
+              {/* Card 1: Consigner Registry */}
+              <div className="terminal-card registry-section">
+                <h4 className="terminal-card-header">Registry Profile</h4>
+                
+                <div className="flex flex-col gap-3">
+                  <div className="detail-row">
+                    <span className="detail-label">Identity Anchor</span>
+                    <span className={`detail-value font-mono text-xs ${data.state !== 'IDLE' ? 'text-white' : 'text-slate-500'}`}>
+                      {data.state === 'IDLE' ? 'Unanchored' : `${data.address.substring(0, 8)}...${data.address.substring(data.address.length - 8)}`}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Verification Lock</span>
+                    <span className={`led-indicator ${
+                      ['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED', 'SIGNATURE_REQUESTED', 'SIGNATURE_REJECTED', 'SIGNATURE_INVALID'].includes(data.state)
+                        ? 'idle' 
+                        : 'verified'
+                    }`}>
+                      <span className="led-dot" />
+                      {['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED', 'SIGNATURE_REQUESTED', 'SIGNATURE_REJECTED', 'SIGNATURE_INVALID'].includes(data.state)
+                        ? 'PENDING' 
+                        : 'LOCKED'}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Collateral Metrics */}
-            {[
-              'RISK_LOW_APPROVED',
-              'RISK_MEDIUM_APPROVED',
-              'STAKE_SIGNATURE_REQUESTED',
-              'STAKE_SIGNATURE_REJECTED',
-              'STAKE_TX_PENDING',
-              'STAKE_TX_FAILED',
-              'STAKE_TX_CONFIRMED',
-              'COSIGNED',
-              'RESOLUTION_PENDING',
-              'RESOLVED_RELEASED',
-              'RESOLVED_SLASHED'
-            ].includes(data.state) && (
-              <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.06)] flex flex-col gap-2">
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">USDC Collateral</div>
-                <div className="detail-row">
-                  <span className="detail-label">Staked Size</span>
-                  <span className="detail-value text-[#00ff88] font-mono">{data.stake.amount} USDC</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Protocol Fee</span>
-                  <span className="detail-value text-[#00ff88] font-mono">{data.stake.feePercent.toFixed(1)}%</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Stake Status</span>
-                  <span className={`led-indicator ${
-                    data.stake.status === 'confirmed' ? 'verified' : 
-                    data.stake.status === 'pending' ? 'active' : 
-                    data.stake.status === 'failed' || data.stake.status === 'rejected' ? 'error' : 'idle'
-                  }`}>
-                    <span className="led-dot" />
-                    {data.stake.status}
-                  </span>
-                </div>
-                {data.stake.txHash && (
-                  <div className="detail-row mt-1 flex justify-between items-center text-[10px]">
-                    <span className="detail-label">TX Hash:</span>
-                    <a 
-                      href={`https://testnet.xlayerscan.com/tx/${data.stake.txHash}`} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-                    >
-                      {data.stake.txHash.substring(0, 10)}...
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
+                {/* Collateral Metrics */}
+                {[
+                  'RISK_LOW_APPROVED',
+                  'RISK_MEDIUM_APPROVED',
+                  'STAKE_SIGNATURE_REQUESTED',
+                  'STAKE_SIGNATURE_REJECTED',
+                  'STAKE_TX_PENDING',
+                  'STAKE_TX_FAILED',
+                  'STAKE_TX_CONFIRMED',
+                  'COSIGNED',
+                  'RESOLUTION_PENDING',
+                  'RESOLVED_RELEASED',
+                  'RESOLVED_SLASHED'
+                ].includes(data.state) && (
+                  <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.06)] flex flex-col gap-2">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">USDC Collateral</div>
+                    <div className="detail-row">
+                      <span className="detail-label">Staked Size</span>
+                      <span className="detail-value text-[#00ff88] font-mono">{data.stake.amount} USDC</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Protocol Fee</span>
+                      <span className="detail-value text-[#00ff88] font-mono">{data.stake.feePercent.toFixed(1)}%</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Stake Status</span>
+                      <span className={`led-indicator ${
+                        data.stake.status === 'confirmed' ? 'verified' : 
+                        data.stake.status === 'pending' ? 'active' : 
+                        data.stake.status === 'failed' || data.stake.status === 'rejected' ? 'error' : 'idle'
+                      }`}>
+                        <span className="led-dot" />
+                        {data.stake.status}
+                      </span>
+                    </div>
+                    {data.stake.txHash && (
+                      <div className="detail-row mt-1 flex justify-between items-center text-[10px]">
+                        <span className="detail-label">TX Hash:</span>
+                        <a 
+                          href={`https://testnet.xlayerscan.com/tx/${data.stake.txHash}`} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                        >
+                          {data.stake.txHash.substring(0, 10)}...
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Card 2: Outcome Verdict */}
-          <div className="terminal-card outcome-section">
-            <h4 className="terminal-card-header">Verdict Resolution</h4>
-            
-            <div className="flex flex-col gap-3">
-              <div className="detail-row">
-                <span className="detail-label">Shield Resolution</span>
-                <span className={`led-indicator ${
-                  data.resolution.status === 'released' ? 'verified' : 
-                  data.resolution.status === 'slashed' ? 'error' : 'idle'
-                }`}>
-                  <span className="led-dot" />
-                  {data.resolution.status}
-                </span>
+              {/* Card 2: Outcome Verdict */}
+              <div className="terminal-card outcome-section">
+                <h4 className="terminal-card-header">Verdict Resolution</h4>
+                
+                <div className="flex flex-col gap-3">
+                  <div className="detail-row">
+                    <span className="detail-label">Shield Resolution</span>
+                    <span className={`led-indicator ${
+                      data.resolution.status === 'released' ? 'verified' : 
+                      data.resolution.status === 'slashed' ? 'error' : 'idle'
+                    }`}>
+                      <span className="led-dot" />
+                      {data.resolution.status}
+                    </span>
+                  </div>
+                  {data.resolution.resolvedAt && (
+                    <div className="detail-row">
+                      <span className="detail-label">Timestamp</span>
+                      <span className="detail-value font-mono text-xs">
+                        {formatRelativeTime(data.resolution.resolvedAt)}
+                      </span>
+                    </div>
+                  )}
+                  {data.resolution.status === 'slashed' && data.resolution.redirectedTo && (
+                    <div className="detail-row mt-2 pt-2 border-t border-[rgba(255,255,255,0.06)] text-[10px]">
+                      <span className="detail-label">Redirect Pool:</span>
+                      <span className="detail-value font-mono text-[9px] text-ellipsis overflow-hidden">{data.resolution.redirectedTo}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              {data.resolution.resolvedAt && (
-                <div className="detail-row">
-                  <span className="detail-label">Timestamp</span>
-                  <span className="detail-value font-mono text-xs">
-                    {formatRelativeTime(data.resolution.resolvedAt)}
+            </div>
+
+            {/* Center Column: Visual Core Centerpiece + CTA Button */}
+            <div className={`terminal-card security-core-card console-slide-center ${['RISK_COMPUTING'].includes(data.state) ? 'scanning-card-glow' : ''}`}>
+              <h4 className="terminal-card-header">Security Core</h4>
+
+              {/* Inline Wallet-to-Agent trust anchor links */}
+              <div className="flex justify-between items-center w-full px-4 mb-2">
+                <div className="flex flex-col flex-shrink-0">
+                  <span className="text-[9px] text-slate-500 uppercase tracking-widest">Client Identity</span>
+                  <span className={`font-mono text-[11px] ${isConnected ? 'text-[#00ff88]' : 'text-slate-500'}`}>
+                    {isConnected ? `${address?.substring(0, 6)}...${address?.substring(address.length - 4)}` : 'DISCONNECTED'}
                   </span>
                 </div>
-              )}
-              {data.resolution.status === 'slashed' && data.resolution.redirectedTo && (
-                <div className="detail-row mt-2 pt-2 border-t border-[rgba(255,255,255,0.06)] text-[10px]">
-                  <span className="detail-label">Redirect Pool:</span>
-                  <span className="detail-value font-mono text-[9px] text-ellipsis overflow-hidden">{data.resolution.redirectedTo}</span>
+                
+                <div className="flex-1 h-[1px] bg-gradient-to-r from-green-500/10 to-green-500/50 mx-4 relative">
+                  <div className={`absolute top-[-2px] left-1/2 w-1.5 h-1.5 rounded-full bg-[#00ff88] ${data.state === 'SIGNATURE_REQUESTED' ? 'animate-ping' : ''}`} />
                 </div>
-              )}
+
+                <div className="flex flex-col text-right flex-shrink-0">
+                  <span className="text-[9px] text-slate-500 uppercase tracking-widest">L2 trust link</span>
+                  <span className={`font-mono text-[11px] ${['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED'].includes(data.state) ? 'text-slate-500' : 'text-[#00ff88]'}`}>
+                    {['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED'].includes(data.state) ? 'UNLINKED' : 'OKX-L2-SECURE'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Gyroscope Concentric rings shield widget */}
+              <div className="core-telemetry-widget">
+                <div className={`risk-radar-sweep ${['RISK_COMPUTING', 'HASH_VERIFICATION_RUNNING'].includes(data.state) ? 'active' : ''}`} />
+
+                <svg width="220" height="220" viewBox="0 0 220 220" className="absolute z-10">
+                  <circle cx="110" cy="110" r="95" className={`${getRingClass(1)} ring-axis-1`} />
+                  <circle cx="110" cy="110" r="75" className={`${getRingClass(2)} ring-axis-2`} />
+                  <circle cx="110" cy="110" r="55" className={`${getRingClass(3)} ring-axis-3`} />
+                </svg>
+
+                {/* Shield status center logo lock */}
+                <div className={`shield-lock-icon ${data.resolution.status === 'slashed' ? 'slashed' : 'active'}`}>
+                  {data.resolution.status === 'slashed' ? (
+                    <Logo size={24} className="text-red-500 filter drop-shadow-[0_0_8px_rgba(255,51,51,0.5)]" />
+                  ) : data.resolution.status === 'released' || data.stake.status === 'confirmed' ? (
+                    <Logo size={24} className="text-[#00ff88] filter drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]" />
+                  ) : (
+                    <Logo size={24} className="text-slate-500 opacity-60" />
+                  )}
+                </div>
+              </div>
+
+              {/* Concentric index text labels */}
+              <div className="core-score-display">
+                <div className="core-score-value">
+                  {data.state === 'RISK_COMPUTING' ? '??' : data.risk.score > 0 ? data.risk.score : '--'}
+                </div>
+                <div className="core-score-label">
+                  {data.state === 'RISK_COMPUTING' ? 'COMPUTING COGNITIVE INDEX...' : 'CONSIGNE RISK INDEX'}
+                </div>
+              </div>
+
+              {/* Action trigger button */}
+              {renderMainActionButton()}
             </div>
-          </div>
-        </div>
 
-        {/* Center Column: Visual Core Centerpiece + CTA Button */}
-        <div className={`terminal-card security-core-card console-slide-center ${['RISK_COMPUTING'].includes(data.state) ? 'scanning-card-glow' : ''}`}>
-          <h4 className="terminal-card-header">Security Core</h4>
-
-          {/* Inline Wallet-to-Agent trust anchor links */}
-          <div className="flex justify-between items-center w-full px-4 mb-2">
-            <div className="flex flex-col flex-shrink-0">
-              <span className="text-[9px] text-slate-500 uppercase tracking-widest">Client Identity</span>
-              <span className={`font-mono text-[11px] ${isConnected ? 'text-[#00ff88]' : 'text-slate-500'}`}>
-                {isConnected ? `${address?.substring(0, 6)}...${address?.substring(address.length - 4)}` : 'DISCONNECTED'}
-              </span>
+            {/* Right Column: Live Telemetry Log stream only */}
+            <div className="flex flex-col gap-4 console-slide-right">
+              <div className="terminal-card log-stream-container flex-1" style={{ minHeight: '380px' }}>
+                <h4 className="terminal-card-header">Live Telemetry Log</h4>
+                <div ref={logTerminalRef} className="log-stream-terminal" style={{ flex: 1 }}>
+                  {logs.length > 0 ? (
+                    logs.map((log, idx) => (
+                      <div key={idx} className={`log-entry ${log.type}`}>
+                        {log.text}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[9px] text-slate-600 font-mono">STANDBY // SYSTEM MONITORING INACTIVE...</div>
+                  )}
+                </div>
+              </div>
             </div>
-            
-            <div className="flex-1 h-[1px] bg-gradient-to-r from-green-500/10 to-green-500/50 mx-4 relative">
-              <div className={`absolute top-[-2px] left-1/2 w-1.5 h-1.5 rounded-full bg-[#00ff88] ${data.state === 'SIGNATURE_REQUESTED' ? 'animate-ping' : ''}`} />
+          </>
+        ) : (
+          /* Conscience Ledger Tab with scroll reveal animation */
+          <div className="scroll-reveal-container flex flex-col lg:flex-row gap-5 col-span-3 w-full">
+            {/* Left Column: Live Telemetry Log */}
+            <div className="flex flex-col gap-4 lg:w-1/3 console-slide-left">
+              <div className="terminal-card log-stream-container flex-1" style={{ minHeight: '420px' }}>
+                <h4 className="terminal-card-header">Live Telemetry Log</h4>
+                <div ref={logTerminalRef} className="log-stream-terminal" style={{ flex: 1 }}>
+                  {logs.length > 0 ? (
+                    logs.map((log, idx) => (
+                      <div key={idx} className={`log-entry ${log.type}`}>
+                        {log.text}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-[9px] text-slate-600 font-mono">STANDBY // SYSTEM MONITORING INACTIVE...</div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-col text-right flex-shrink-0">
-              <span className="text-[9px] text-slate-500 uppercase tracking-widest">L2 trust link</span>
-              <span className={`font-mono text-[11px] ${['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED'].includes(data.state) ? 'text-slate-500' : 'text-[#00ff88]'}`}>
-                {['IDLE', 'WALLET_CONNECTING', 'WALLET_CONNECTED'].includes(data.state) ? 'UNLINKED' : 'OKX-L2-SECURE'}
-              </span>
-            </div>
-          </div>
-
-          {/* Gyroscope Concentric rings shield widget */}
-          <div className="core-telemetry-widget">
-            <div className={`risk-radar-sweep ${['RISK_COMPUTING', 'HASH_VERIFICATION_RUNNING'].includes(data.state) ? 'active' : ''}`} />
-
-            <svg width="220" height="220" viewBox="0 0 220 220" className="absolute z-10">
-              <circle cx="110" cy="110" r="95" className={`${getRingClass(1)} ring-axis-1`} />
-              <circle cx="110" cy="110" r="75" className={`${getRingClass(2)} ring-axis-2`} />
-              <circle cx="110" cy="110" r="55" className={`${getRingClass(3)} ring-axis-3`} />
-            </svg>
-
-            {/* Shield status center logo lock */}
-            <div className={`shield-lock-icon ${data.resolution.status === 'slashed' ? 'slashed' : 'active'}`}>
-              {data.resolution.status === 'slashed' ? (
-                <Logo size={24} className="text-red-500 filter drop-shadow-[0_0_8px_rgba(255,51,51,0.5)]" />
-              ) : data.resolution.status === 'released' || data.stake.status === 'confirmed' ? (
-                <Logo size={24} className="text-[#00ff88] filter drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]" />
-              ) : (
-                <Logo size={24} className="text-slate-500 opacity-60" />
-              )}
-            </div>
-          </div>
-
-          {/* Concentric index text labels */}
-          <div className="core-score-display">
-            <div className="core-score-value">
-              {data.state === 'RISK_COMPUTING' ? '??' : data.risk.score > 0 ? data.risk.score : '--'}
-            </div>
-            <div className="core-score-label">
-              {data.state === 'RISK_COMPUTING' ? 'COMPUTING COGNITIVE INDEX...' : 'CONSIGNE RISK INDEX'}
-            </div>
-          </div>
-
-          {/* Action trigger button */}
-          {renderMainActionButton()}
-        </div>
-
-        {/* Right Column: Conscience Ledger visual blocks + Log stream */}
-        <div className="flex flex-col gap-4 console-slide-right">
-          <div className={`terminal-card ledger-container ${['LEDGER_FETCHING', 'HASH_VERIFICATION_RUNNING'].includes(data.state) ? 'scanning-card-glow' : ''}`}>
-            <h4 className="terminal-card-header">Conscience Ledger</h4>
-            
-            {![
-              'IDLE', 
-              'WALLET_CONNECTING', 
-              'WALLET_CONNECTED', 
-              'SIGNATURE_REQUESTED', 
-              'SIGNATURE_REJECTED', 
-              'SIGNATURE_INVALID'
-            ].includes(data.state) ? (
+            {/* Right Column: Conscience Ledger Timeline */}
+            <div className="terminal-card ledger-container lg:w-2/3 console-slide-right" style={{ minHeight: '420px' }}>
               <ConscienceLedger 
                 state={data.state}
                 ledger={data.ledger}
                 hashVerification={data.hashVerification}
                 onRetryFetch={handleSyncLedger}
               />
-            ) : (
-              <div className="flex flex-col items-center justify-center flex-1 border border-dashed border-white/5 rounded-lg p-4 text-center">
-                <Database className="w-6 h-6 text-slate-600 mb-2" />
-                <span className="font-mono text-[9px] text-slate-500 uppercase tracking-wider">Awaiting cryptographical signature anchor...</span>
-              </div>
-            )}
-
-            {/* Realtime Log Terminal Deck */}
-            <div className="log-stream-container">
-              <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2 font-mono flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse" />
-                Live Telemetry Log
-              </span>
-              <div ref={logTerminalRef} className="log-stream-terminal">
-                {logs.length > 0 ? (
-                  logs.map((log, idx) => (
-                    <div key={idx} className={`log-entry ${log.type}`}>
-                      {log.text}
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-[9px] text-slate-600 font-mono">STANDBY // SYSTEM MONITORING INACTIVE...</div>
-                )}
-              </div>
             </div>
           </div>
-        </div>
+        )}
 
       </div>
 
