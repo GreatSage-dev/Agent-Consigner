@@ -29,16 +29,29 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   return (
     <div className={`control-panel ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Header */}
-      <div 
+      <button 
         className="control-header" 
         onClick={() => setIsCollapsed(!isCollapsed)}
+        style={{ 
+          width: '100%', 
+          background: 'rgba(0, 255, 136, 0.03)', 
+          border: 'none', 
+          borderBottom: '1px solid rgba(0, 255, 136, 0.08)', 
+          cursor: 'pointer', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          padding: '0.6rem 0.8rem', 
+          color: 'inherit', 
+          fontFamily: 'inherit', 
+          outline: 'none' 
+        }}
       >
         <div className="flex items-center gap-1.5">
           <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
           <h3>Demo Controller</h3>
         </div>
         {isCollapsed ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-      </div>
+      </button>
 
       {/* Body */}
       <div className="control-body">
@@ -48,14 +61,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="control-buttons-grid">
             <button
               onClick={() => onRequestIdChange('demo-established')}
-              className={`control-btn flex items-center justify-center gap-1 ${currentRequestId === 'demo-established' ? 'active' : ''}`}
+              className={`control-btn flex items-center justify-center gap-1 ${currentRequestId.startsWith('demo-established') ? 'active' : ''}`}
             >
               <Sparkles className="w-3.5 h-3.5" />
               Established Agent
             </button>
             <button
               onClick={() => onRequestIdChange('demo-new')}
-              className={`control-btn flex items-center justify-center gap-1 ${currentRequestId === 'demo-new' ? 'active' : ''}`}
+              className={`control-btn flex items-center justify-center gap-1 ${currentRequestId.startsWith('demo-new') ? 'active' : ''}`}
             >
               <Flame className="w-3.5 h-3.5" />
               New Agent

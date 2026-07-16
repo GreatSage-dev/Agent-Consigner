@@ -757,3 +757,19 @@
   color: var(--color-active);
   box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
 }
+
+@media (max-width: 767px) {
+  .control-panel {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    max-height: 380px;
+  }
+  .control-panel.collapsed {
+    max-height: 38px;
+  }
+  .control-body {
+    max-height: 330px;
+  }
+}

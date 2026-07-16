@@ -135,9 +135,10 @@ export const ConscienceLedger: React.FC<ConscienceLedgerProps> = ({
 
             return (
               <div key={record.decisionId} className="flex flex-col">
-                <div
+                <button
                   onClick={() => setSelectedBlock(index)}
                   className={`timeline-node-item status-${status} ${isSelected ? 'selected' : ''}`}
+                  style={{ width: '100%', border: 'none', background: 'none', textAlign: 'left', padding: '0.6rem 0.8rem', color: 'inherit', fontFamily: 'inherit', outline: 'none' }}
                 >
                   {/* Glowing Node Marker */}
                   <div className="timeline-node-dot" />
@@ -170,7 +171,7 @@ export const ConscienceLedger: React.FC<ConscienceLedgerProps> = ({
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
 
                 {/* Inline Tamper Warning */}
                 {isSelected && status === 'broken' && (
