@@ -47,11 +47,11 @@ const xLayerTestnet = {
   rpcUrls: {
     default: { 
       http: [
-        'https://xlayertestrpc.okx.com/terigon',
-        'https://testrpc.xlayer.tech/terigon',
         'https://xlayertestrpc.okx.com',
         'https://testrpc.xlayer.tech',
         'https://xlayer-testnet.drpc.org',
+        'https://xlayertestrpc.okx.com/terigon',
+        'https://testrpc.xlayer.tech/terigon',
       ] 
     },
   },
@@ -97,11 +97,11 @@ const config = getDefaultConfig({
   chains: [xLayerTestnet, xLayer, arbitrum, mainnet],
   transports: {
     [xLayerTestnet.id]: fallback([
-      http('https://xlayertestrpc.okx.com/terigon'),
-      http('https://testrpc.xlayer.tech/terigon'),
       http('https://xlayertestrpc.okx.com'),
       http('https://testrpc.xlayer.tech'),
       http('https://xlayer-testnet.drpc.org'),
+      http('https://xlayertestrpc.okx.com/terigon'),
+      http('https://testrpc.xlayer.tech/terigon'),
     ]),
     [xLayer.id]: http(),
     [arbitrum.id]: http(),
