@@ -11,7 +11,7 @@ import { WagmiProvider, http, useAccount, useSignMessage, useConnect, useDisconn
 import { injected } from 'wagmi/connectors';
 import { mainnet, arbitrum, xLayer } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { parseEther } from 'viem';
+import { parseEther, fallback } from 'viem';
 import { 
   CheckCircle2, 
   AlertTriangle, 
@@ -49,6 +49,9 @@ const xLayerTestnet = {
       http: [
         'https://xlayertestrpc.okx.com/terigon',
         'https://testrpc.xlayer.tech/terigon',
+        'https://xlayertestrpc.okx.com',
+        'https://testrpc.xlayer.tech',
+        'https://xlayer-testnet.drpc.org',
       ] 
     },
   },
@@ -93,7 +96,13 @@ const config = getDefaultConfig({
   projectId: '3fbb6b779f58355a1f35515785f39642', // Standard fallback demo projectId
   chains: [xLayerTestnet, xLayer, arbitrum, mainnet],
   transports: {
-    [xLayerTestnet.id]: http('https://xlayertestrpc.okx.com/terigon'),
+    [xLayerTestnet.id]: fallback([
+      http('https://xlayertestrpc.okx.com/terigon'),
+      http('https://testrpc.xlayer.tech/terigon'),
+      http('https://xlayertestrpc.okx.com'),
+      http('https://testrpc.xlayer.tech'),
+      http('https://xlayer-testnet.drpc.org'),
+    ]),
     [xLayer.id]: http(),
     [arbitrum.id]: http(),
     [mainnet.id]: http(),

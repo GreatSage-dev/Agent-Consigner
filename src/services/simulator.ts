@@ -14,7 +14,7 @@ class SimulatorDatabase {
   }
 
   private getInitialState(requestId: string, overrideState: Partial<CosignRequest> = {}): CosignRequest {
-    const isNew = requestId === 'demo-new';
+    const isNew = requestId.startsWith('demo-new');
     
     // Generate valid linked records for established agent
     const records: LedgerRecord[] = [];
@@ -78,7 +78,7 @@ class SimulatorDatabase {
     initial.state = 'IDLE';
     
     // Set initial values representing idle state
-    initial.ledger.status = requestId === 'demo-new' ? 'empty' : 'loaded';
+    initial.ledger.status = requestId.startsWith('demo-new') ? 'empty' : 'loaded';
     initial.hashVerification.status = 'verified';
     initial.risk.status = 'approved';
     initial.stake.status = 'requested';
@@ -142,7 +142,7 @@ class SimulatorDatabase {
   // Runs a complete flow automatically with customizable step times
   public runFlow(requestId: string, onStateTransition?: (state: CosignState) => void) {
     this.stopSimulation(requestId);
-    const isNew = requestId === 'demo-new';
+    const isNew = requestId.startsWith('demo-new');
 
     const steps: { state: CosignState; delay: number; action?: () => void }[] = [
       { state: 'IDLE', delay: 0 },
@@ -253,7 +253,7 @@ class SimulatorDatabase {
         delay: isNew ? 4000 : 2500, // Longer delay for new to accommodate transition
         action: () => {
           this.update(requestId, {
-            stake: { status: 'requested', amount: isNew ? 500 : 5000, feePercent: isNew ? 2.5 : 1.0, txHash: null, error: null }
+            stake: { status: 'requested', amount: isNew ? 0.02 : 0.01, feePercent: isNew ? 2.5 : 1.0, txHash: null, error: null }
           });
         }
       },
@@ -378,6 +378,7 @@ class SimulatorDatabase {
         // Mark risk as computing -> decline
         req.risk.status = 'declined';
         req.risk.tier = 'high';
+        req.risk.score = 45;
         req.risk.reason = 'chain_integrity';
         break;
       case 'HASH_CHAIN_VERIFIED':
