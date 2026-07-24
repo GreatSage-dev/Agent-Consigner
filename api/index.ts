@@ -345,6 +345,17 @@ app.post('/api/cosign', async (req, res) => {
   }
 });
 
+// Catch-all wildcard fallback router for external platform status checks
+app.use((req, res) => {
+  res.json({
+    status: 'online',
+    name: 'Agent Consigner',
+    version: '1.0.0',
+    timestamp: Date.now(),
+    firebase: isFirebaseConfigured ? 'connected' : 'offline',
+  });
+});
+
 // For local testing
 const PORT = process.env.PORT || 3000;
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {

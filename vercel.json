@@ -1,4 +1,31 @@
 {
+  "env": {
+    "VITE_FIREBASE_API_KEY": "AIzaSyDKTOg2HA8RznXA2BSa0Tt3EnamGKX8CRQ",
+    "VITE_FIREBASE_AUTH_DOMAIN": "verdict-hackathon.firebaseapp.com",
+    "VITE_FIREBASE_DATABASE_URL": "https://verdict-hackathon-default-rtdb.europe-west1.firebasedatabase.app",
+    "VITE_FIREBASE_PROJECT_ID": "verdict-hackathon",
+    "VITE_FIREBASE_STORAGE_BUCKET": "verdict-hackathon.firebasestorage.app",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": "20008028767",
+    "VITE_FIREBASE_APP_ID": "1:20008028767:web:8b37869b380668423929ea",
+    "FIREBASE_API_KEY": "AIzaSyDKTOg2HA8RznXA2BSa0Tt3EnamGKX8CRQ",
+    "FIREBASE_AUTH_DOMAIN": "verdict-hackathon.firebaseapp.com",
+    "FIREBASE_DATABASE_URL": "https://verdict-hackathon-default-rtdb.europe-west1.firebasedatabase.app",
+    "FIREBASE_PROJECT_ID": "verdict-hackathon",
+    "FIREBASE_STORAGE_BUCKET": "verdict-hackathon.firebasestorage.app",
+    "FIREBASE_MESSAGING_SENDER_ID": "20008028767",
+    "FIREBASE_APP_ID": "1:20008028767:web:8b37869b380668423929ea"
+  },
+  "build": {
+    "env": {
+      "VITE_FIREBASE_API_KEY": "AIzaSyDKTOg2HA8RznXA2BSa0Tt3EnamGKX8CRQ",
+      "VITE_FIREBASE_AUTH_DOMAIN": "verdict-hackathon.firebaseapp.com",
+      "VITE_FIREBASE_DATABASE_URL": "https://verdict-hackathon-default-rtdb.europe-west1.firebasedatabase.app",
+      "VITE_FIREBASE_PROJECT_ID": "verdict-hackathon",
+      "VITE_FIREBASE_STORAGE_BUCKET": "verdict-hackathon.firebasestorage.app",
+      "VITE_FIREBASE_MESSAGING_SENDER_ID": "20008028767",
+      "VITE_FIREBASE_APP_ID": "1:20008028767:web:8b37869b380668423929ea"
+    }
+  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api" }
   ]
