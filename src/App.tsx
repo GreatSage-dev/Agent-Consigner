@@ -1265,7 +1265,7 @@ export function App() {
           <RainbowKitProvider 
             avatar={CustomAvatar}
             theme={darkTheme({
-              accentColor: 'var(--color-active)',
+              accentColor: '#00ff88',
               accentColorForeground: '#03060a',
               borderRadius: 'large',
               overlayBlur: 'small',
