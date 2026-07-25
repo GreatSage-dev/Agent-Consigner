@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "npm run build && tsx api/index.ts",
+    "start": "tsx api/index.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },
