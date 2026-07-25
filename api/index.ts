@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, get } from 'firebase/database';
 
@@ -345,22 +346,40 @@ app.post('/api/cosign', async (req, res) => {
   }
 });
 
-// Catch-all wildcard fallback router for external platform status checks
-app.use((req, res) => {
-  res.json({
-    status: 'online',
-    name: 'Agent Consigner',
-    version: '1.0.0',
-    timestamp: Date.now(),
-    firebase: isFirebaseConfigured ? 'connected' : 'offline',
+// Serve static frontend files from 'dist' directory if present
+const distPath = path.join(process.cwd(), 'dist');
+app.use(express.static(distPath));
+
+// SPA catch-all router
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.json({
+      status: 'online',
+      name: 'Agent Consigner',
+      version: '1.0.0',
+      timestamp: Date.now(),
+      firebase: isFirebaseConfigured ? 'connected' : 'offline',
+    });
+  }
+  const indexPath = path.join(distPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      res.json({
+        status: 'online',
+        name: 'Agent Consigner',
+        version: '1.0.0',
+        timestamp: Date.now(),
+        firebase: isFirebaseConfigured ? 'connected' : 'offline',
+      });
+    }
   });
 });
 
-// For local testing
-const PORT = process.env.PORT || 3000;
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Agent Consigner backend running on http://localhost:${PORT}`);
+// Port binding for 24/7 deployment platforms (Railway, Render, Fly.io, etc.)
+const PORT = Number(process.env.PORT) || 3000;
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Agent Consigner 24/7 server running on port ${PORT}`);
   });
 }
 
