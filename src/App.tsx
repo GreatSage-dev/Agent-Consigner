@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Component, ReactNode } from 'react';
+import { useState, useEffect, useRef, useMemo, Component, ReactNode } from 'react';
 import '@rainbow-me/rainbowkit/styles.css';
 import { 
   getDefaultConfig, 
@@ -91,25 +91,7 @@ const AGENT_COSIGNER_VAULT_ABI = [
   }
 ] as const;
 
-const config = getDefaultConfig({
-  appName: 'Agent Cosigner',
-  projectId: '3fbb6b779f58355a1f35515785f39642', // Standard fallback demo projectId
-  chains: [xLayerTestnet, xLayer, arbitrum, mainnet],
-  transports: {
-    [xLayerTestnet.id]: fallback([
-      http('https://xlayertestrpc.okx.com'),
-      http('https://testrpc.xlayer.tech'),
-      http('https://xlayer-testnet.drpc.org'),
-      http('https://xlayertestrpc.okx.com/terigon'),
-      http('https://testrpc.xlayer.tech/terigon'),
-    ]),
-    [xLayer.id]: http(),
-    [arbitrum.id]: http(),
-    [mainnet.id]: http(),
-  },
-});
 
-const queryClient = new QueryClient();
 
 // --- Ambient Star Particle Canvas ---
 const ParticleCanvas = () => {
@@ -1242,9 +1224,43 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 // --- App Root Wrapper with Providers ---
 export function App() {
+  const wagmiConfig = useMemo(
+    () =>
+      getDefaultConfig({
+        appName: 'Agent Cosigner',
+        projectId: '3fbb6b779f58355a1f35515785f39642',
+        chains: [xLayerTestnet, xLayer, arbitrum, mainnet],
+        transports: {
+          [xLayerTestnet.id]: fallback([
+            http('https://xlayertestrpc.okx.com'),
+            http('https://testrpc.xlayer.tech'),
+            http('https://xlayer-testnet.drpc.org'),
+            http('https://xlayertestrpc.okx.com/terigon'),
+            http('https://testrpc.xlayer.tech/terigon'),
+          ]),
+          [xLayer.id]: http(),
+          [arbitrum.id]: http(),
+          [mainnet.id]: http(),
+        },
+      }),
+    []
+  );
+
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: false,
+          },
+        },
+      })
+  );
+
   return (
     <ErrorBoundary>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider 
             avatar={CustomAvatar}
