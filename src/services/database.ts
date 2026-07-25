@@ -4,13 +4,13 @@ import { CosignRequest } from '../types';
 import { simulator } from './simulator';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDKTOg2HA8RznXA2BSa0Tt3EnamGKX8CRQ",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "verdict-hackathon.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://verdict-hackathon-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "verdict-hackathon",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "verdict-hackathon.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "20008028767",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:20008028767:web:8b37869b380668423929ea",
 };
 
 const isFirebaseConfigured = !!firebaseConfig.apiKey && !!firebaseConfig.databaseURL;

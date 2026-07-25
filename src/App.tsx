@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Component, ReactNode } from 'react';
 import '@rainbow-me/rainbowkit/styles.css';
 import { 
   getDefaultConfig, 
@@ -1212,24 +1212,54 @@ const CustomAvatar = ({ ensImage, size }: { address: string; ensImage?: string |
   );
 };
 
+// --- Error Boundary ---
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('Agent Consigner Application Error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '40px', color: '#00ff88', background: '#0a0b0d', fontFamily: 'monospace', minHeight: '100vh' }}>
+          <h2 style={{ color: '#ff4d4d', marginBottom: '16px' }}>🛡️ Agent Consigner Application Notice</h2>
+          <p style={{ color: '#8a8f98', marginBottom: '16px' }}>An error occurred during initialization. Please reload or check console logs.</p>
+          <pre style={{ background: '#121418', padding: '16px', borderRadius: '8px', color: '#ff4d4d', overflow: 'auto' }}>
+            {String(this.state.error?.stack || this.state.error)}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // --- App Root Wrapper with Providers ---
 export function App() {
   return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider 
-          avatar={CustomAvatar}
-          theme={darkTheme({
-            accentColor: 'var(--color-active)',
-            accentColorForeground: '#03060a',
-            borderRadius: 'large',
-            overlayBlur: 'small',
-          })}
-        >
-          <AppContent />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <ErrorBoundary>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <RainbowKitProvider 
+            avatar={CustomAvatar}
+            theme={darkTheme({
+              accentColor: 'var(--color-active)',
+              accentColorForeground: '#03060a',
+              borderRadius: 'large',
+              overlayBlur: 'small',
+            })}
+          >
+            <AppContent />
+          </RainbowKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </ErrorBoundary>
   );
 }
 
