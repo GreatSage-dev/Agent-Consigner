@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, get } from 'firebase/database';
 
@@ -346,8 +347,15 @@ app.post('/api/cosign', async (req, res) => {
   }
 });
 
-// Serve static frontend files from 'dist' directory if present
-const distPath = path.join(process.cwd(), 'dist');
+// Robust distPath resolution for Railway / Docker / Local
+let distPath = path.join(process.cwd(), 'dist');
+if (!fs.existsSync(distPath)) {
+  distPath = path.resolve(__dirname, '..', 'dist');
+}
+if (!fs.existsSync(distPath)) {
+  distPath = path.resolve(__dirname, 'dist');
+}
+
 app.use(express.static(distPath));
 
 // SPA catch-all router
@@ -362,16 +370,15 @@ app.get('*', (req, res) => {
     });
   }
   const indexPath = path.join(distPath, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      res.json({
-        status: 'online',
-        name: 'Agent Consigner',
-        version: '1.0.0',
-        timestamp: Date.now(),
-        firebase: isFirebaseConfigured ? 'connected' : 'offline',
-      });
-    }
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  res.json({
+    status: 'online',
+    name: 'Agent Consigner',
+    version: '1.0.0',
+    timestamp: Date.now(),
+    firebase: isFirebaseConfigured ? 'connected' : 'offline',
   });
 });
 
