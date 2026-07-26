@@ -277,22 +277,21 @@ const AppContent = () => {
 
   // Dynamic Web3 connection and balance diagnostics logs
   useEffect(() => {
-    if (!isConnected) {
-      if (data && data.state !== 'IDLE' && !['RESOLVED_RELEASED', 'RESOLVED_SLASHED'].includes(data.state)) {
-        updateCosignRequest(requestId, { state: 'IDLE' });
-      }
-      return;
-    }
+    if (!isConnected) return;
 
     const time = new Date().toLocaleTimeString();
     
-    setLogs(prev => [
-      ...prev,
-      {
-        text: `[${time}] WEB3: Wallet connected with active chain ID = ${chainId} (Expected: ${xLayerTestnet.id})`,
-        type: chainId === xLayerTestnet.id ? 'success' : 'error'
-      }
-    ]);
+    setLogs(prev => {
+      const last = prev[prev.length - 1];
+      if (last && last.text.includes(`active chain ID = ${chainId}`)) return prev;
+      return [
+        ...prev,
+        {
+          text: `[${time}] WEB3: Wallet connected with active chain ID = ${chainId} (Expected: ${xLayerTestnet.id})`,
+          type: chainId === xLayerTestnet.id ? 'success' : 'error'
+        }
+      ];
+    });
 
     if (data && data.state === 'IDLE') {
       updateCosignRequest(requestId, { 
@@ -300,27 +299,7 @@ const AppContent = () => {
         address: address || data.address
       });
     }
-
-    if (balanceData) {
-      setLogs(prev => [
-        ...prev,
-        {
-          text: `[${time}] WEB3: Balance loaded successfully = ${balanceData.formatted} ${balanceData.symbol}`,
-          type: 'success'
-        }
-      ]);
-    }
-
-    if (balanceError) {
-      setLogs(prev => [
-        ...prev,
-        {
-          text: `[${time}] WEB3 ERROR: Balance query failed: ${balanceError.message.substring(0, 80)}`,
-          type: 'error'
-        }
-      ]);
-    }
-  }, [isConnected, chainId, balanceData, balanceError, data?.state]);
+  }, [isConnected, chainId, address]);
 
   // Subscribe to real Firebase or local simulator data
   useEffect(() => {

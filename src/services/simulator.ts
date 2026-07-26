@@ -94,13 +94,16 @@ class SimulatorDatabase {
     }
     this.listeners.get(requestId)!.add(listener);
 
-    // Initial emit
+    // Initial emit scheduled asynchronously
     let currentData = this.data.get(requestId);
     if (!currentData) {
       currentData = this.getInitialState(requestId);
       this.data.set(requestId, currentData);
     }
-    listener(currentData);
+    const snapshot = JSON.parse(JSON.stringify(currentData));
+    queueMicrotask(() => {
+      listener(snapshot);
+    });
 
     return () => {
       const set = this.listeners.get(requestId);
@@ -127,8 +130,19 @@ class SimulatorDatabase {
   private notify(requestId: string) {
     const set = this.listeners.get(requestId);
     if (set) {
-      const current = this.data.get(requestId)!;
-      set.forEach((listener) => listener({ ...current }));
+      const current = this.data.get(requestId);
+      if (!current) return;
+      const snapshot = JSON.parse(JSON.stringify(current));
+      const listenerArray = Array.from(set);
+      queueMicrotask(() => {
+        listenerArray.forEach((listener) => {
+          try {
+            listener(snapshot);
+          } catch (err) {
+            console.error('Simulator listener exception:', err);
+          }
+        });
+      });
     }
   }
 
