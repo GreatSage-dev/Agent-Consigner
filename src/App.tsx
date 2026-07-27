@@ -536,13 +536,13 @@ const AppContent = () => {
         
         await updateCosignRequest(requestId, { 
           state: 'STAKE_TX_PENDING',
-          stake: { ...data.stake, status: 'pending', txHash: '0x3a56cf89a58b29cd12c3de4588abefef89a0bc45' }
+          stake: { ...data.stake, status: 'pending', txHash: '0xb5227c1952df24e7d239365cb8bf11ba14ca32ab7dd6cef6ee4575066619ca5a' }
         });
 
         setTimeout(async () => {
           await updateCosignRequest(requestId, { 
             state: 'STAKE_TX_CONFIRMED',
-            stake: { ...data.stake, status: 'confirmed', txHash: '0x3a56cf89a58b29cd12c3de4588abefef89a0bc45' }
+            stake: { ...data.stake, status: 'confirmed', txHash: '0xb5227c1952df24e7d239365cb8bf11ba14ca32ab7dd6cef6ee4575066619ca5a' }
           });
 
           setTimeout(async () => {

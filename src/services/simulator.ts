@@ -276,7 +276,7 @@ class SimulatorDatabase {
         delay: 2000,
         action: () => {
           this.update(requestId, {
-            stake: { ...this.data.get(requestId)!.stake, status: 'pending', txHash: '0x3a56cf89a...23ab' }
+            stake: { ...this.data.get(requestId)!.stake, status: 'pending', txHash: '0xb5227c1952df24e7d239365cb8bf11ba14ca32ab7dd6cef6ee4575066619ca5a' }
           });
         }
       },
@@ -432,7 +432,7 @@ class SimulatorDatabase {
         break;
       case 'STAKE_TX_PENDING':
         req.stake.status = 'pending';
-        req.stake.txHash = '0xabcde1234567890f';
+        req.stake.txHash = '0xb5227c1952df24e7d239365cb8bf11ba14ca32ab7dd6cef6ee4575066619ca5a';
         break;
       case 'STAKE_TX_FAILED':
         req.stake.status = 'failed';
@@ -440,7 +440,7 @@ class SimulatorDatabase {
         break;
       case 'STAKE_TX_CONFIRMED':
         req.stake.status = 'confirmed';
-        req.stake.txHash = '0xabcde1234567890f';
+        req.stake.txHash = '0xb5227c1952df24e7d239365cb8bf11ba14ca32ab7dd6cef6ee4575066619ca5a';
         break;
       case 'COSIGNED':
         break;
