@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "tsx api/index.ts",
+    "start": "npx -y @okxweb3/a2a-node daemon start && tsx api/index.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },

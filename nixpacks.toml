@@ -2,4 +2,4 @@
 cmds = ["npm run build"]
 
 [start]
-cmd = "tsx api/index.ts"
+cmd = "npx -y @okxweb3/a2a-node daemon start && tsx api/index.ts"
