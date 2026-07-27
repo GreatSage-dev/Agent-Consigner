@@ -296,7 +296,7 @@ app.post('/api/cosign', async (req, res) => {
     if (isApproved) {
       // Simulate Staking & Cosigning
       currentRequest.stake.status = 'pending';
-      currentRequest.stake.txHash = '0x' + Math.random().toString(16).substring(2, 66);
+      currentRequest.stake.txHash = '0xb5227c1952df24e7d239365cb8bf11ba14ca32ab7dd6cef6ee4575066619ca5a';
       await updateDb(requestId, {
         state: 'STAKE_SIGNATURE_REQUESTED',
         stake: currentRequest.stake,
