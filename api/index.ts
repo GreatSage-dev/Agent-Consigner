@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import { exec } from 'child_process';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, get } from 'firebase/database';
 
@@ -387,6 +388,15 @@ const PORT = Number(process.env.PORT) || 3000;
 if (!process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Agent Consigner 24/7 server running on port ${PORT}`);
+    
+    // Asynchronously spawn non-blocking A2A daemon worker for 24/7 background heartbeats
+    exec('npx -y @okxweb3/a2a-node daemon start', (err, stdout, stderr) => {
+      if (err) {
+        console.warn('A2A cloud background daemon notice:', err.message);
+      } else {
+        console.log('A2A cloud background daemon running:', stdout);
+      }
+    });
   });
 }
 
