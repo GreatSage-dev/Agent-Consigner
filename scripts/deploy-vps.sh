@@ -46,9 +46,9 @@ npm install
 echo "--> Building production frontend..."
 npm run build
 
-# 6. Start / Restart processes using PM2
+# 6. Start / Restart processes using PM2 (using .cjs extension for ES module compatibility)
 echo "--> Supervising processes with PM2..."
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 
 # 7. Save PM2 state & enable startup systemd hook
 pm2 save
