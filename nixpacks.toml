@@ -2,4 +2,4 @@
 cmds = ["npm run build"]
 
 [start]
-cmd = "npx -y serve dist -l $PORT -s"
+cmd = "node scripts/static-server.mjs"
