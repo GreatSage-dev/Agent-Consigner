@@ -389,14 +389,18 @@ if (!process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Agent Consigner 24/7 server running on port ${PORT}`);
     
-    // Asynchronously spawn non-blocking A2A daemon worker for 24/7 background heartbeats
-    exec('npx -y @okxweb3/a2a-node daemon start', (err, stdout, stderr) => {
-      if (err) {
-        console.warn('A2A cloud background daemon notice:', err.message);
-      } else {
-        console.log('A2A cloud background daemon running:', stdout);
-      }
-    });
+    // Only spawn A2A daemon on the designated primary VPS instance
+    if (process.env.ENABLE_A2A_DAEMON === 'true') {
+      exec('npx -y @okxweb3/a2a-node daemon start', (err, stdout, stderr) => {
+        if (err) {
+          console.warn('A2A cloud background daemon notice:', err.message);
+        } else {
+          console.log('A2A cloud background daemon running:', stdout);
+        }
+      });
+    } else {
+      console.log('A2A daemon disabled on this instance (set ENABLE_A2A_DAEMON=true to enable).');
+    }
   });
 }
 

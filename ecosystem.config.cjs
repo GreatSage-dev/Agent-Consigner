@@ -25,7 +25,8 @@ module.exports = {
         VITE_FIREBASE_PROJECT_ID: 'verdict-hackathon',
         VITE_FIREBASE_STORAGE_BUCKET: 'verdict-hackathon.firebasestorage.app',
         VITE_FIREBASE_MESSAGING_SENDER_ID: '20008028767',
-        VITE_FIREBASE_APP_ID: '1:20008028767:web:8b37869b380668423929ea'
+        VITE_FIREBASE_APP_ID: '1:20008028767:web:8b37869b380668423929ea',
+        ENABLE_A2A_DAEMON: 'true'
       }
     },
     {
