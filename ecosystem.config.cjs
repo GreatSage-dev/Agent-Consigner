@@ -42,6 +42,19 @@ module.exports = {
         OKX_AGENT_ID: '5859',
         POLL_INTERVAL_MS: 10000
       }
+    },
+    {
+      name: 'agent-consigner-a2a-daemon',
+      script: 'node_modules/@okxweb3/a2a-node/dist/cli.js',
+      args: 'run',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      env: {
+        NODE_ENV: 'production',
+        OKX_AGENT_ID: '5859'
+      }
     }
   ]
 };
