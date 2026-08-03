@@ -5,6 +5,9 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, get } from 'firebase/database';
+import { paymentMiddleware, x402ResourceServer } from '@okxweb3/x402-express';
+import { ExactEvmScheme } from '@okxweb3/x402-evm/exact/server';
+import { OKXFacilitatorClient } from '@okxweb3/x402-core';
 
 // --- Types Replicated from src/types/index.ts ---
 export type CosignState =
@@ -140,6 +143,44 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// --- OKX x402 Payment Protocol Configuration ---
+const X402_NETWORK = process.env.X402_NETWORK || 'eip155:1952'; // X Layer Testnet
+const X402_PAY_TO = process.env.PAY_TO_ADDRESS || '0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5';
+const OKX_API_KEY = process.env.OKX_API_KEY || '';
+
+if (OKX_API_KEY) {
+  try {
+    const facilitatorClient = new OKXFacilitatorClient({
+      apiKey: OKX_API_KEY,
+      secretKey: process.env.OKX_SECRET_KEY || '',
+      passphrase: process.env.OKX_PASSPHRASE || '',
+    });
+    const resourceServer = new x402ResourceServer(facilitatorClient);
+    resourceServer.register(X402_NETWORK, new ExactEvmScheme());
+
+    app.use(
+      paymentMiddleware(
+        {
+          'POST /api/cosign': {
+            accepts: [{
+              scheme: 'exact',
+              network: X402_NETWORK,
+              payTo: X402_PAY_TO,
+              price: '$0.01',
+            }],
+            description: 'Agent Consigner L2 Co-Signing Security Audit',
+            mimeType: 'application/json',
+          },
+        },
+        resourceServer
+      )
+    );
+    console.log('OKX x402 Payment Middleware active for /api/cosign');
+  } catch (err) {
+    console.warn('OKX x402 Payment Middleware setup notice:', err);
+  }
+}
 
 // --- Health Check / Ping Endpoint ---
 app.get('/api/health', (req, res) => {
