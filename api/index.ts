@@ -182,6 +182,34 @@ if (OKX_API_KEY) {
   }
 }
 
+// --- A2A Agent Card Discovery (OKX Protocol Requirement) ---
+app.get('/.well-known/agent.json', (req, res) => {
+  res.json({
+    name: 'Agent Consigner',
+    description: 'L2 Co-Signing Security Shield for Autonomous AI Agent Economies. Stakes OKB collateral and produces SHA-256 hash-chain audit trails via Agent Conscience on OKX X Layer.',
+    url: 'http://38.49.217.185:3000',
+    version: '1.0.0',
+    capabilities: {
+      cosigning: true,
+      ledgerAudit: true,
+      staking: true,
+      hashChainVerification: true,
+    },
+    provider: {
+      organization: 'Agent Consigner',
+      url: 'https://github.com/GreatSage-dev/Agent-Consigner',
+    },
+    protocolVersion: '0.2.5',
+    agentId: '5859',
+    endpoints: [
+      { name: 'health', url: 'http://38.49.217.185:3000/api/health', method: 'GET' },
+      { name: 'cosign', url: 'http://38.49.217.185:3000/api/cosign', method: 'POST' },
+    ],
+    networks: ['eip155:1952'],
+    contractAddress: '0x6465fA0b07797175498f5647F558a8587b0834Db',
+  });
+});
+
 // --- Health Check / Ping Endpoint ---
 app.get('/api/health', (req, res) => {
   res.json({
