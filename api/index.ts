@@ -200,7 +200,7 @@ app.get('/.well-known/agent.json', (req, res) => {
       url: 'https://github.com/GreatSage-dev/Agent-Consigner',
     },
     protocolVersion: '0.2.5',
-    agentId: '5859',
+    agentId: '10614',
     endpoints: [
       { name: 'health', url: 'http://38.49.217.185:3000/api/health', method: 'GET' },
       { name: 'cosign', url: 'http://38.49.217.185:3000/api/cosign', method: 'POST' },

@@ -36,7 +36,7 @@ const agentCardJson = JSON.stringify({
     url: 'https://github.com/GreatSage-dev/Agent-Consigner',
   },
   protocolVersion: '0.2.5',
-  agentId: '5859',
+  agentId: '10614',
   endpoints: [
     { name: 'health', url: 'https://agent-consigner.up.railway.app/api/health', method: 'GET' },
     { name: 'cosign', url: 'https://agent-consigner.up.railway.app/api/cosign', method: 'POST' },

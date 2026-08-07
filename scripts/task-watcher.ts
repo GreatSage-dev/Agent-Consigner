@@ -13,7 +13,7 @@ import crypto from 'crypto';
  * It handles task polling, SHA-256 hash-chain verification, and co-signing audit verification.
  */
 
-const AGENT_ID = process.env.OKX_AGENT_ID || '5859';
+const AGENT_ID = process.env.OKX_AGENT_ID || '10614';
 const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS) || 10000;
 const API_URL = process.env.COSIGNER_API_URL || 'http://localhost:3000/api/cosign';
 
